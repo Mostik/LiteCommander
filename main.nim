@@ -1,7 +1,11 @@
 import os, osproc, terminal
 
-let errC = execCmd("clear")
-echo ""
+proc clearCmd(line : bool) =
+  if line == true:
+    let errC = execCmd("clear")
+    echo ""
+  else:
+    let errC = execCmd("clear")
 
 proc getFiles() : seq[string] =
   var files : seq[string]
@@ -23,8 +27,11 @@ proc output_all() =
     echo oll
 
 while true:
-  let errC = execCmd("clear")
-  echo ""
+  clearCmd(true)
   output_all()
   setCursorPos(0,0)
   var input_command = readLine(stdin)
+
+  if input_command == "quit":
+    clearCmd(false)
+    quit(0)
