@@ -22,9 +22,13 @@ proc getDirs() : seq[string] =
   result = dirs
 
 proc output_all() =
-  var all = getCurrentDir() & getDirs() & getFiles()
-  for oll in all:
-    echo oll
+  echo getCurrentDir()
+  for dir in getDirs():
+    setForegroundColor(fgYellow)
+    echo dir
+    resetAttributes()
+  for file in getFiles():
+    echo file
 
 proc command(input_command : string) =
   var tokenTWO = re"""[/]([A-Za-z~]+)\s+([A-Za-z~]+)"""
