@@ -1,5 +1,4 @@
-import os, osproc, terminal
-import re
+import os, osproc, terminal, re
 #=======================================
 proc clearCmd(line : bool) =
   if line == true:
@@ -28,24 +27,24 @@ proc output_all() =
     echo oll
 
 proc command(input_command : string) =
-  var tokenTWO = re"""[/]([a-z]+)\s+([a-z]+)"""
-  var tokenONE = re"""[/]([a-z]+)"""
+  var tokenTWO = re"""[/]([A-Za-z~]+)\s+([A-Za-z~]+)"""
+  var tokenONE = re"""[/]([A-Za-z~]+)"""
   if input_command =~ tokenTWO:
-    if matches[0] == "quit":
-      clearCmd(false)
-      quit(0)
-    elif matches[0] == "home":
-      setCurrentDir(getHomeDir())
-    else:
+    if matches[0] == "this":
       try:
-        setCurrentDir(input_command)
+        echo "CurrentDir ", getCurrentDir()
+        setCurrentDir(getCurrentDir() & '/' & matches[1])
       except:
         discard
+    elif matches[0] == "~":
+      setCurrentDir(getHomeDir())
+    else:
+      discard
   elif input_command =~ tokenONE:
     if matches[0] == "quit":
       clearCmd(false)
       quit(0)
-    elif matches[0] == "home":
+    elif matches[0] == "~":
       setCurrentDir(getHomeDir())
     else:
       try:
