@@ -54,20 +54,17 @@ proc thispath(path : string) : string =
   result = newpath
 
 proc command(input_command : string) =
-  var tokenTWO = re"""[/]([A-Za-z~]+)\s+([A-Za-z~]+)"""
-  var tokenONE = re"""[/]([A-Za-z~]+)"""
+  var tokenTWO = re"""[#]([A-Za-z~]+)\s+([A-Za-z~]+)"""
+  var tokenONE = re"""[#]([A-Za-z~]+)"""
+  var cmdCommand = re"""[$](.*)"""
   if input_command =~ tokenTWO:
     discard
   elif input_command =~ tokenONE:
     if matches[0] == "quit":
       clearCmd(false)
       quit(0)
-    else:
-      if input_command[0..3] == "./":
-        try:
-          setCurrentDir(thispath(input_command))
-        except:
-          discard   
+  elif input_command =~ cmdCommand:
+    var errorcode : int = execCmd(matches[0])
   else:
     if input_command[0..1] == "./":
         try:
@@ -78,6 +75,8 @@ proc command(input_command : string) =
       setCurrentDir(uppath(getCurrentDir()))
     elif input_command == "~":
       setCurrentDir(getHomeDir())
+    else:
+      discard
 
 #=======================================
 
