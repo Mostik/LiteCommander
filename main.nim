@@ -1,4 +1,4 @@
-import os, osproc, terminal, re
+import os, osproc, terminal, re, sequtils
 #=======================================
 proc clearCmd(line : bool) =
   if line == true:
@@ -25,10 +25,26 @@ proc output_all() =
   echo getCurrentDir()
   for dir in getDirs():
     setForegroundColor(fgYellow)
-    echo dir
-    resetAttributes()
-  for file in getFiles():
+    echo dirgetHomeDir()
     echo file
+
+proc uppath(path : string) : string = 
+  var arr, newarr: seq[string]
+  var newpath : string
+  for word in split(path, re"[/]+"):
+    arr.add(word)
+
+  newarr = arr.filterIt(it != "")
+  if newarr.len > 0:
+    newarr.delete(newarr.len-1, newarr.len-1)
+  else:
+    newarr.delete(newarr.len, newarr.len)
+
+  for word in newarr:
+    newpath = newpath & "/" & word
+  
+  newpath = newpath & "/"
+  result = newpath
 
 proc command(input_command : string) =
   var tokenTWO = re"""[/]([A-Za-z~]+)\s+([A-Za-z~]+)"""
@@ -50,14 +66,15 @@ proc command(input_command : string) =
       quit(0)
     elif matches[0] == "~":
       setCurrentDir(getHomeDir())
+    elif matches[0] == "up":
+      setCurrentDir(uppath(getCurrentDir()))
     else:
       try:
         setCurrentDir(input_command)
       except:
         discard
   else:
-    echo "Error)"
-    sleep(3000)
+    discard
 
 #=======================================
 
