@@ -1,4 +1,4 @@
-import os, osproc, terminal, re, sequtils
+import os, osproc, terminal, re, sequtils, strutils
 #=======================================
 proc clearCmd(line : bool) =
   if line == true:
@@ -25,7 +25,9 @@ proc output_all() =
   echo getCurrentDir()
   for dir in getDirs():
     setForegroundColor(fgYellow)
-    echo dirgetHomeDir()
+    echo dir
+    resetAttributes()
+  for file in getFiles():
     echo file
 
 proc uppath(path : string) : string = 
@@ -44,6 +46,11 @@ proc uppath(path : string) : string =
     newpath = newpath & "/" & word
   
   newpath = newpath & "/"
+  result = newpath
+
+proc thispath(path : string) : string = 
+  var newpath : string
+  newpath = replace(path, "./", getCurrentDir() & "/")
   result = newpath
 
 proc command(input_command : string) =
@@ -69,12 +76,17 @@ proc command(input_command : string) =
     elif matches[0] == "up":
       setCurrentDir(uppath(getCurrentDir()))
     else:
-      try:
-        setCurrentDir(input_command)
-      except:
-        discard
+      if input_command[0..3] == "./":
+        try:
+          setCurrentDir(thispath(input_command))
+        except:
+          discard   
   else:
-    discard
+    if input_command[0..1] == "./":
+        try:
+          setCurrentDir(thispath(input_command))
+        except:
+          discard 
 
 #=======================================
 
