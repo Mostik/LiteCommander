@@ -57,24 +57,11 @@ proc command(input_command : string) =
   var tokenTWO = re"""[/]([A-Za-z~]+)\s+([A-Za-z~]+)"""
   var tokenONE = re"""[/]([A-Za-z~]+)"""
   if input_command =~ tokenTWO:
-    if matches[0] == "this":
-      try:
-        echo "CurrentDir ", getCurrentDir()
-        setCurrentDir(getCurrentDir() & '/' & matches[1])
-      except:
-        discard
-    elif matches[0] == "~":
-      setCurrentDir(getHomeDir())
-    else:
-      discard
+    discard
   elif input_command =~ tokenONE:
     if matches[0] == "quit":
       clearCmd(false)
       quit(0)
-    elif matches[0] == "~":
-      setCurrentDir(getHomeDir())
-    elif matches[0] == "up":
-      setCurrentDir(uppath(getCurrentDir()))
     else:
       if input_command[0..3] == "./":
         try:
@@ -86,7 +73,11 @@ proc command(input_command : string) =
         try:
           setCurrentDir(thispath(input_command))
         except:
-          discard 
+          discard
+    elif input_command == "../" or input_command == "..":
+      setCurrentDir(uppath(getCurrentDir()))
+    elif input_command == "~":
+      setCurrentDir(getHomeDir())
 
 #=======================================
 
