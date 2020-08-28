@@ -1,5 +1,7 @@
 import os, osproc, terminal, re, sequtils, strutils
 #=======================================
+var str : string = ""
+
 proc clearCmd(line : bool) =
   if line == true:
     let errC = execCmd("clear")
@@ -53,6 +55,49 @@ proc thispath(path : string) : string =
   newpath = replace(path, "./", getCurrentDir() & "/")
   result = newpath
 
+proc getLine(): string =
+  while true:
+    var c = getch()
+    if c == '\e':
+      c = getch()
+      if c == '[':
+        case getch()
+        of 'A':
+          discard
+        of 'D':
+          discard
+        of 'B':
+          discard
+        of 'C':
+          discard
+        else:
+          write(stdout, c)
+          str = str & c
+      else: 
+        write(stdout, c)
+        str = str & c
+    elif c == '\x7F':
+      if str.len > 1:
+        str.delete(str.len-1, str.len-1)
+        clearCmd(true)
+        output_all()
+        setCursorPos(0,0)
+        write(stdout, str)
+      else:
+        str = ""
+        clearCmd(true)
+        output_all()
+        setCursorPos(0,0)
+        write(stdout, str)
+    elif c == '\c':
+      var answer: string = str
+      str = ""
+      return answer
+    else: 
+      write(stdout, c)
+      str = str & c
+
+
 proc command(input_command : string) =
   var tokenTWO = re"""[#]([A-Za-z~]+)\s+([A-Za-z~]+)"""
   var tokenONE = re"""[#]([A-Za-z~]+)"""
@@ -84,7 +129,7 @@ while true:
   clearCmd(true)
   output_all()
   setCursorPos(0,0)
-  var input_command = readLine(stdin)
+  var input_command = getLine()
   command(input_command)
 
   
