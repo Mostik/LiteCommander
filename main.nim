@@ -1,6 +1,8 @@
 import os, osproc, terminal, re, sequtils, strutils
 #=======================================
 var str : string = ""
+var color_item: int = 0
+proc bgRed*(s: string): string {.procvar.} = "\e[41m" & s & "\e[0m"
 
 proc clearCmd(line : bool) =
   if line == true:
@@ -23,15 +25,42 @@ proc getDirs() : seq[string] =
     dirs.add(dir)
   result = dirs
 
-proc output_all() =
+proc output_all(move: int)=
+  var items : seq[string]
   echo getCurrentDir()
   for dir in getDirs():
     setForegroundColor(fgYellow)
-    echo dir
+    items.add(dir)
     resetAttributes()
   for file in getFiles():
-    echo file
+    items.add(file)
 
+  if move == 0:
+    items[color_item] = bgRed(items[color_item])
+  elif move == 1:
+    if true:
+      if color_item > 0:
+        items[color_item] = items[color_item]
+        items[color_item - 1] = bgRed(items[color_item - 1])
+        color_item = color_item - 1
+      else:
+        items[color_item] = bgRed(items[color_item])
+    else:
+      discard
+  elif move == 2:
+    if true:
+      if color_item < items.len-1:
+        items[color_item] = items[color_item]
+        items[color_item + 1] = bgRed(items[color_item + 1])
+        color_item = color_item + 1
+      else:
+        items[color_item] = bgRed(items[color_item])
+    else:
+      discard
+
+  for item in items:
+    echo item
+    
 proc uppath(path : string) : string = 
   var arr, newarr: seq[string]
   var newpath : string
@@ -63,11 +92,15 @@ proc getLine(): string =
       if c == '[':
         case getch()
         of 'A':
-          discard
+          clearCmd(true)
+          output_all(1)
+          setCursorPos(0,0)
         of 'D':
           discard
         of 'B':
-          discard
+          clearCmd(true)
+          output_all(2)
+          setCursorPos(0,0)
         of 'C':
           discard
         else:
@@ -80,13 +113,13 @@ proc getLine(): string =
       if str.len > 1:
         str.delete(str.len-1, str.len-1)
         clearCmd(true)
-        output_all()
+        output_all(0)
         setCursorPos(0,0)
         write(stdout, str)
       else:
         str = ""
         clearCmd(true)
-        output_all()
+        output_all(0)
         setCursorPos(0,0)
         write(stdout, str)
     elif c == '\c':
@@ -114,12 +147,15 @@ proc command(input_command : string) =
     if input_command[0..1] == "./":
         try:
           setCurrentDir(thispath(input_command))
+          color_item = 0
         except:
           discard
     elif input_command == "../" or input_command == "..":
       setCurrentDir(uppath(getCurrentDir()))
+      color_item = 0
     elif input_command == "~":
       setCurrentDir(getHomeDir())
+      color_item = 0
     else:
       discard
 
@@ -127,7 +163,7 @@ proc command(input_command : string) =
 
 while true:
   clearCmd(true)
-  output_all()
+  output_all(0)
   setCursorPos(0,0)
   var input_command = getLine()
   command(input_command)
