@@ -2,7 +2,7 @@ import os, osproc, terminal, re, sequtils, strutils
 #=======================================
 var str : string = ""
 var color_item: int = 0
-proc bgRed*(s: string): string {.procvar.} = "\e[41m" & s & "\e[0m"
+proc bgRed(s: string): string {.procvar.} = "\e[41m" & s & "\e[0m"
 
 proc clearCmd(line : bool) =
   if line == true:
@@ -25,42 +25,11 @@ proc getDirs() : seq[string] =
     dirs.add(dir)
   result = dirs
 
-proc output_all(move: int)=
-  var items : seq[string]
-  echo getCurrentDir()
-  for dir in getDirs():
-    setForegroundColor(fgYellow)
-    items.add(dir)
-    resetAttributes()
-  for file in getFiles():
-    items.add(file)
+proc thispath(path : string) : string = 
+  var newpath : string
+  newpath = replace(path, "./", getCurrentDir() & "/")
+  result = newpath
 
-  if move == 0:
-    items[color_item] = bgRed(items[color_item])
-  elif move == 1:
-    if true:
-      if color_item > 0:
-        items[color_item] = items[color_item]
-        items[color_item - 1] = bgRed(items[color_item - 1])
-        color_item = color_item - 1
-      else:
-        items[color_item] = bgRed(items[color_item])
-    else:
-      discard
-  elif move == 2:
-    if true:
-      if color_item < items.len-1:
-        items[color_item] = items[color_item]
-        items[color_item + 1] = bgRed(items[color_item + 1])
-        color_item = color_item + 1
-      else:
-        items[color_item] = bgRed(items[color_item])
-    else:
-      discard
-
-  for item in items:
-    echo item
-    
 proc uppath(path : string) : string = 
   var arr, newarr: seq[string]
   var newpath : string
@@ -79,10 +48,68 @@ proc uppath(path : string) : string =
   newpath = newpath & "/"
   result = newpath
 
-proc thispath(path : string) : string = 
-  var newpath : string
-  newpath = replace(path, "./", getCurrentDir() & "/")
-  result = newpath
+proc output_all(move: int): string {.discardable.}=
+  var items : seq[string]
+  echo getCurrentDir()
+  for dir in getDirs():
+    setForegroundColor(fgYellow)
+    items.add(dir)
+    resetAttributes()
+  for file in getFiles():
+    items.add(file)
+  if items.len > 0:
+    if move == 0:
+      items[color_item] = bgRed(items[color_item])
+    elif move == 1:
+      if true:
+        if color_item > 0:
+          items[color_item] = items[color_item]
+          items[color_item - 1] = bgRed(items[color_item - 1])
+          color_item = color_item - 1
+        else:
+          items[color_item] = bgRed(items[color_item])
+      else:
+        discard
+    elif move == 2:
+      if true:
+        if color_item < items.len-1:
+          items[color_item] = items[color_item]
+          items[color_item + 1] = bgRed(items[color_item + 1])
+          color_item = color_item + 1
+        else:
+          items[color_item] = bgRed(items[color_item])
+      else:
+        discard
+    elif move == 3:
+      if items[color_item] =~ re"""\[(.*)\]""":
+        echo getCurrentDir() & "/" & matches[0]
+        try:
+          #command("./" & matches[0])
+          color_item = 0
+          var key = "./" & matches[0]
+          return key
+        except:
+          discard
+      else:
+        discard
+    elif move == 4:
+      try:
+        color_item = 0
+        var key = "../"
+        return key
+      except:
+        discard
+    else:
+      echo "What?"
+      sleep(2000)
+  else:
+    echo "dir empty"
+    sleep(1000)
+    discard
+
+ 
+  for item in items:
+    echo item
 
 proc getLine(): string =
   while true:
@@ -96,13 +123,18 @@ proc getLine(): string =
           output_all(1)
           setCursorPos(0,0)
         of 'D':
-          discard
+          clearCmd(true)
+          var newpath: string = output_all(4)
+          return newpath
         of 'B':
           clearCmd(true)
           output_all(2)
           setCursorPos(0,0)
         of 'C':
-          discard
+          clearCmd(true)
+          var newpath: string = output_all(3)
+          return newpath
+          #setCursorPos(0,0)
         else:
           write(stdout, c)
           str = str & c
@@ -129,7 +161,6 @@ proc getLine(): string =
     else: 
       write(stdout, c)
       str = str & c
-
 
 proc command(input_command : string) =
   var tokenTWO = re"""[#]([A-Za-z~]+)\s+([A-Za-z~]+)"""
@@ -158,7 +189,6 @@ proc command(input_command : string) =
       color_item = 0
     else:
       discard
-
 #=======================================
 
 while true:

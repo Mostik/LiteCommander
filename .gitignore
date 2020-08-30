@@ -1,6 +1,7 @@
 main
 *txt
 *cr
-*test
+*test*
 /*/
 test.nim
+test2.nim
