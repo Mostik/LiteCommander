@@ -100,12 +100,15 @@ proc output_all(move: int): string {.discardable.}=
       except:
         discard
     else:
-      echo "What?"
-      sleep(2000)
+      discard
   else:
-    echo "dir empty"
-    sleep(1000)
-    discard
+    if move == 4:
+      try:
+        color_item = 0
+        var key = "../"
+        return key
+      except:
+        discard
 
  
   for item in items:
