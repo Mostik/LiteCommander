@@ -11,10 +11,22 @@ proc clearCmd(line : bool) =
   else:
     let errC = execCmd("clear")
 
+proc fileSize(file: string): string =
+  var filesize: BiggestInt = getFileSize(file)
+  if (int(filesize) / int(1024) >= 1):
+    if (int(filesize) / int(1024*1024) >= 1):
+      if (int(filesize) / int(1024*1024*1024) >= 1):
+        return $(int(int(filesize) / int(1024*1024*1024))) & "Gb"
+      else:
+        return $(int(int(filesize) / int(1024*1024))) & "Mb"
+    else:
+      return $(int((int(filesize) / int(1024)))) & "Kb"
+  else:
+    return $filesize & "B"
 proc getFiles() : seq[string] =
   var files : seq[string]
   for file in walkFiles("*"):
-    var file = file & " - " & $getFileSize(file)
+    var file = file & " - " & fileSize(file)
     files.add(file)
   result = files
 
@@ -57,6 +69,10 @@ proc output_all(move: int): string {.discardable.}=
     resetAttributes()
   for file in getFiles():
     items.add(file)
+
+
+  #items.add("height:" & $terminalHeight())
+  #items.add("size:" & $items.len)
   if items.len > 0:
     if move == 0:
       items[color_item] = bgRed(items[color_item])
@@ -109,7 +125,6 @@ proc output_all(move: int): string {.discardable.}=
       except:
         discard
 
- 
   for item in items:
     echo item
 
@@ -199,5 +214,3 @@ while true:
   setCursorPos(0,0)
   var input_command = getLine()
   command(input_command)
-
-  
