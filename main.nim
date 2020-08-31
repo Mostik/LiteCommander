@@ -84,7 +84,6 @@ proc output_all(move: int): string {.discardable.}=
       if items[color_item] =~ re"""\[(.*)\]""":
         echo getCurrentDir() & "/" & matches[0]
         try:
-          #command("./" & matches[0])
           color_item = 0
           var key = "./" & matches[0]
           return key
@@ -178,12 +177,12 @@ proc command(input_command : string) =
   elif input_command =~ cmdCommand:
     var errorcode : int = execCmd(matches[0])
   else:
-    if input_command[0..1] == "./":
-        try:
-          setCurrentDir(thispath(input_command))
-          color_item = 0
-        except:
-          discard
+    if input_command =~ re"""^./(.*)""":
+      try:
+        setCurrentDir(thispath(input_command))
+        color_item = 0
+      except:
+        discard
     elif input_command == "../" or input_command == "..":
       setCurrentDir(uppath(getCurrentDir()))
       color_item = 0
