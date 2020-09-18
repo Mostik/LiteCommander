@@ -1,66 +1,14 @@
 import os, osproc, terminal, re, sequtils, strutils
+import procedures
 #=======================================
 var str : string = ""
 var color_item: int = 0
-proc bgRed(s: string): string {.procvar.} = "\e[41m" & s & "\e[0m"
 
-proc clearCmd(line : bool) =
-  if line == true:
-    let errC = execCmd("clear")
-    echo ""
-  else:
-    let errC = execCmd("clear")
+type
+  move = enum
+    no, up, down, left, right
 
-proc fileSize(file: string): string =
-  var filesize: BiggestInt = getFileSize(file)
-  if (int(filesize) / int(1024) >= 1):
-    if (int(filesize) / int(1024*1024) >= 1):
-      if (int(filesize) / int(1024*1024*1024) >= 1):
-        return $(int(int(filesize) / int(1024*1024*1024))) & "Gb"
-      else:
-        return $(int(int(filesize) / int(1024*1024))) & "Mb"
-    else:
-      return $(int((int(filesize) / int(1024)))) & "Kb"
-  else:
-    return $filesize & "B"
-proc getFiles() : seq[string] =
-  var files : seq[string]
-  for file in walkFiles("*"):
-    var file = file & " - " & fileSize(file)
-    files.add(file)
-  result = files
-
-proc getDirs() : seq[string] =
-  var dirs : seq[string]
-  for dir in walkDirs("*"):
-    var dir = "[" & dir & "]"
-    dirs.add(dir)
-  result = dirs
-
-proc thispath(path : string) : string = 
-  var newpath : string
-  newpath = replace(path, "./", getCurrentDir() & "/")
-  result = newpath
-
-proc uppath(path : string) : string = 
-  var arr, newarr: seq[string]
-  var newpath : string
-  for word in split(path, re"[/]+"):
-    arr.add(word)
-
-  newarr = arr.filterIt(it != "")
-  if newarr.len > 0:
-    newarr.delete(newarr.len-1, newarr.len-1)
-  else:
-    newarr.delete(newarr.len, newarr.len)
-
-  for word in newarr:
-    newpath = newpath & "/" & word
-  
-  newpath = newpath & "/"
-  result = newpath
-
-proc output_all(move: int): string {.discardable.}=
+proc output_all(move: move): string {.discardable.}=
   var items : seq[string]
   echo getCurrentDir()
   for dir in getDirs():
@@ -70,33 +18,28 @@ proc output_all(move: int): string {.discardable.}=
   for file in getFiles():
     items.add(file)
 
-
-  #items.add("height:" & $terminalHeight())
-  #items.add("size:" & $items.len)
   if items.len > 0:
-    if move == 0:
+    if move == no:
       items[color_item] = bgRed(items[color_item])
-    elif move == 1:
+    elif move == up:
       if true:
         if color_item > 0:
-          items[color_item] = items[color_item]
           items[color_item - 1] = bgRed(items[color_item - 1])
           color_item = color_item - 1
         else:
           items[color_item] = bgRed(items[color_item])
       else:
         discard
-    elif move == 2:
+    elif move == down:
       if true:
         if color_item < items.len-1:
-          items[color_item] = items[color_item]
           items[color_item + 1] = bgRed(items[color_item + 1])
           color_item = color_item + 1
         else:
           items[color_item] = bgRed(items[color_item])
       else:
         discard
-    elif move == 3:
+    elif move == right:
       if items[color_item] =~ re"""\[(.*)\]""":
         echo getCurrentDir() & "/" & matches[0]
         try:
@@ -107,7 +50,7 @@ proc output_all(move: int): string {.discardable.}=
           discard
       else:
         discard
-    elif move == 4:
+    elif move == left:
       try:
         color_item = 0
         var key = "../"
@@ -117,7 +60,7 @@ proc output_all(move: int): string {.discardable.}=
     else:
       discard
   else:
-    if move == 4:
+    if move == left:
       try:
         color_item = 0
         var key = "../"
@@ -128,6 +71,11 @@ proc output_all(move: int): string {.discardable.}=
   for item in items:
     echo item
 
+proc cloust(empty_line: bool, output_all_move: move, setcursorposX: int, setcursorposY: int ) =
+  clearCmd(empty_line)
+  output_all(output_all_move)
+  setCursorPos(setcursorposX, setcursorposY)
+
 proc getLine(): string =
   while true:
     var c = getch()
@@ -136,22 +84,17 @@ proc getLine(): string =
       if c == '[':
         case getch()
         of 'A':
-          clearCmd(true)
-          output_all(1)
-          setCursorPos(0,0)
+          cloust(true, up, 0,0)
         of 'D':
           clearCmd(true)
-          var newpath: string = output_all(4)
+          var newpath: string = output_all(left)
           return newpath
         of 'B':
-          clearCmd(true)
-          output_all(2)
-          setCursorPos(0,0)
+          cloust(true, down, 0,0)
         of 'C':
           clearCmd(true)
-          var newpath: string = output_all(3)
+          var newpath: string = output_all(right)
           return newpath
-          #setCursorPos(0,0)
         else:
           write(stdout, c)
           str = str & c
@@ -161,15 +104,11 @@ proc getLine(): string =
     elif c == '\x7F':
       if str.len > 1:
         str.delete(str.len-1, str.len-1)
-        clearCmd(true)
-        output_all(0)
-        setCursorPos(0,0)
+        cloust(true, no, 0,0)
         write(stdout, str)
       else:
         str = ""
-        clearCmd(true)
-        output_all(0)
-        setCursorPos(0,0)
+        cloust(true, no, 0,0)
         write(stdout, str)
     elif c == '\c':
       var answer: string = str
@@ -180,16 +119,13 @@ proc getLine(): string =
       str = str & c
 
 proc command(input_command : string) =
-  var tokenTWO = re"""[#]([A-Za-z~]+)\s+([A-Za-z~]+)"""
-  var tokenONE = re"""[#]([A-Za-z~]+)"""
-  var cmdCommand = re"""[$](.*)"""
-  if input_command =~ tokenTWO:
+  if input_command =~ re"""[#]([A-Za-z~]+)\s+([A-Za-z~]+)""":
     discard
-  elif input_command =~ tokenONE:
+  elif input_command =~ re"""[#]([A-Za-z~]+)""":
     if matches[0] == "quit":
       clearCmd(false)
       quit(0)
-  elif input_command =~ cmdCommand:
+  elif input_command =~ re"""[$](.*)""":
     var errorcode : int = execCmd(matches[0])
   else:
     if input_command =~ re"""^./(.*)""":
@@ -209,8 +145,6 @@ proc command(input_command : string) =
 #=======================================
 
 while true:
-  clearCmd(true)
-  output_all(0)
-  setCursorPos(0,0)
+  cloust(true, no, 0,0)
   var input_command = getLine()
   command(input_command)
