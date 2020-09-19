@@ -2,73 +2,83 @@ import os, osproc, terminal, re, sequtils, strutils
 import procedures
 #=======================================
 var str : string = ""
-var color_item: int = 0
+#var color_item: int = 0
 
 type
   move = enum
     no, up, down, left, right
+  PageData = object
+    items : seq[string]
+    page : int
+    color_item : int
 
-proc output_all(move: move): string {.discardable.}=
-  var items : seq[string]
-  echo getCurrentDir()
-  for dir in getDirs():
-    setForegroundColor(fgYellow)
-    items.add(dir)
-    resetAttributes()
-  for file in getFiles():
-    items.add(file)
 
-  if items.len > 0:
-    if move == no:
-      items[color_item] = bgRed(items[color_item])
-    elif move == up:
+var pd = PageData(items: @[], page: 1, color_item: 0)
+
+proc move_page(move : move): string {.discardable.}=
+  if pd.items.len > 0:
+    case move
+    of no:
+      pd.items[pd.color_item] = bgRed(pd.items[pd.color_item])
+    of up:
       if true:
-        if color_item > 0:
-          items[color_item - 1] = bgRed(items[color_item - 1])
-          color_item = color_item - 1
+        if pd.color_item > 0:
+          pd.items[pd.color_item - 1] = bgRed(pd.items[pd.color_item - 1])
+          pd.color_item = pd.color_item - 1
         else:
-          items[color_item] = bgRed(items[color_item])
+          pd.items[pd.color_item] = bgRed(pd.items[pd.color_item])
       else:
         discard
-    elif move == down:
+    of down:
       if true:
-        if color_item < items.len-1:
-          items[color_item + 1] = bgRed(items[color_item + 1])
-          color_item = color_item + 1
+        if pd.color_item < pd.items.len-1:
+          pd.items[pd.color_item + 1] = bgRed(pd.items[pd.color_item + 1])
+          pd.color_item = pd.color_item + 1
         else:
-          items[color_item] = bgRed(items[color_item])
+          pd.items[pd.color_item] = bgRed(pd.items[pd.color_item])
       else:
         discard
-    elif move == right:
-      if items[color_item] =~ re"""\[(.*)\]""":
+    of right:
+      if pd.items[pd.color_item] =~ re"""\[(.*)\]""":
         echo getCurrentDir() & "/" & matches[0]
         try:
-          color_item = 0
+          pd.color_item = 0
           var key = "./" & matches[0]
           return key
         except:
           discard
       else:
         discard
-    elif move == left:
+    of left:
       try:
-        color_item = 0
+        pd.color_item = 0
         var key = "../"
         return key
       except:
         discard
-    else:
-      discard
   else:
     if move == left:
       try:
-        color_item = 0
+        pd.color_item = 0
         var key = "../"
         return key
       except:
         discard
 
-  for item in items:
+
+proc output_all(move: move): string {.discardable.}=
+  pd.items = @[]
+  echo getCurrentDir()
+  for dir in getDirs():
+    setForegroundColor(fgYellow)
+    pd.items.add(dir)
+    resetAttributes()
+  for file in getFiles():
+    pd.items.add(file)
+
+  result = move_page(move)
+
+  for item in pd.items:
     echo item
 
 proc cloust(empty_line: bool, output_all_move: move, setcursorposX: int, setcursorposY: int ) =
@@ -131,15 +141,15 @@ proc command(input_command : string) =
     if input_command =~ re"""^./(.*)""":
       try:
         setCurrentDir(thispath(input_command))
-        color_item = 0
+        pd.color_item = 0
       except:
         discard
     elif input_command == "../" or input_command == "..":
       setCurrentDir(uppath(getCurrentDir()))
-      color_item = 0
+      pd.color_item = 0
     elif input_command == "~":
       setCurrentDir(getHomeDir())
-      color_item = 0
+      pd.color_item = 0
     else:
       discard
 #=======================================
