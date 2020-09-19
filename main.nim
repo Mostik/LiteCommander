@@ -1,19 +1,21 @@
-import os, osproc, terminal, re, sequtils, strutils
+import os, osproc, terminal, re, strutils
 import procedures
 #=======================================
 var str : string = ""
-#var color_item: int = 0
-
+logclear()
 type
   move = enum
     no, up, down, left, right
   PageData = object
     items : seq[string]
-    page : int
     color_item : int
+    begin_item : int
+    dir : string
+    height : int
+    width : int
 
 
-var pd = PageData(items: @[], page: 1, color_item: 0)
+var pd = PageData(items: @[], color_item: 0, begin_item: 0, dir: getCurrentDir(), height : height(), width : width())
 
 proc move_page(move : move): string {.discardable.}=
   if pd.items.len > 0:
@@ -21,23 +23,31 @@ proc move_page(move : move): string {.discardable.}=
     of no:
       pd.items[pd.color_item] = bgRed(pd.items[pd.color_item])
     of up:
-      if true:
+      if pd.color_item > pd.begin_item:
+        pd.items[pd.color_item - 1] = bgRed(pd.items[pd.color_item - 1])
+        pd.color_item = pd.color_item - 1
+      else:
         if pd.color_item > 0:
-          pd.items[pd.color_item - 1] = bgRed(pd.items[pd.color_item - 1])
           pd.color_item = pd.color_item - 1
-        else:
+          pd.begin_item = pd.begin_item - 1
+          pd.height = pd.height - 1
           pd.items[pd.color_item] = bgRed(pd.items[pd.color_item])
-      else:
-        discard
+        else:
+          pd.color_item = 0
+          pd.items[pd.color_item] = bgRed(pd.items[pd.color_item])
     of down:
-      if true:
         if pd.color_item < pd.items.len-1:
-          pd.items[pd.color_item + 1] = bgRed(pd.items[pd.color_item + 1])
-          pd.color_item = pd.color_item + 1
+          if pd.color_item < pd.height-1:
+            pd.items[pd.color_item + 1] = bgRed(pd.items[pd.color_item + 1])
+            pd.color_item = pd.color_item + 1
+          else:
+            pd.begin_item = pd.begin_item + 1
+            pd.height = pd.height + 1
+            pd.items[pd.color_item + 1] = bgRed(pd.items[pd.color_item + 1])
+            pd.color_item = pd.color_item + 1
         else:
+          pd.color_item = pd.items.len-1
           pd.items[pd.color_item] = bgRed(pd.items[pd.color_item])
-      else:
-        discard
     of right:
       if pd.items[pd.color_item] =~ re"""\[(.*)\]""":
         echo getCurrentDir() & "/" & matches[0]
@@ -68,6 +78,11 @@ proc move_page(move : move): string {.discardable.}=
 
 proc output_all(move: move): string {.discardable.}=
   pd.items = @[]
+
+  if pd.dir != getCurrentDir():
+    pd.begin_item = 0
+    pd.height = height()-1
+    pd.dir = getCurrentDir()
   echo getCurrentDir()
   for dir in getDirs():
     setForegroundColor(fgYellow)
@@ -76,10 +91,14 @@ proc output_all(move: move): string {.discardable.}=
   for file in getFiles():
     pd.items.add(file)
 
-  result = move_page(move)
-
-  for item in pd.items:
-    echo item
+  if pd.items.len > height():
+    result = move_page(move)
+    for item in pd.items[pd.begin_item..pd.height-1]:
+      echo item
+  else:
+    result = move_page(move)
+    for item in pd.items:
+      echo item
 
 proc cloust(empty_line: bool, output_all_move: move, setcursorposX: int, setcursorposY: int ) =
   clearCmd(empty_line)
@@ -129,7 +148,7 @@ proc getLine(): string =
       str = str & c
 
 proc command(input_command : string) =
-  if input_command =~ re"""[#]([A-Za-z~]+)\s+([A-Za-z~]+)""":
+  if input_command =~ re"""[#]([A-Za-z~]+)\s+([A-Za-z~0-9]+)""":
     discard
   elif input_command =~ re"""[#]([A-Za-z~]+)""":
     if matches[0] == "quit":

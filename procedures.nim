@@ -58,4 +58,21 @@ proc uppath*(path : string) : string =
   newpath = newpath & "/"
   result = newpath
 
+proc height*(): int  =
+  result = terminalHeight()-3
+proc width*(): int  =
+  result = terminalWidth()
 
+var logpath* = ""
+
+proc logclear*() =
+  logpath = getCurrentDir()
+  var file = open( logpath & "/test.txt", fmWrite)
+  file.writeLine("")
+  file.close()
+
+proc loginfo*(str : auto) =
+  var file = open(logpath & "/test.txt", fmReadWriteExisting)
+  discard file.readAll()
+  file.writeLine(str)
+  file.close()
