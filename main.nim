@@ -85,9 +85,7 @@ proc output_all(move: move): string {.discardable.}=
     pd.dir = getCurrentDir()
   echo getCurrentDir()
   for dir in getDirs():
-    setForegroundColor(fgYellow)
     pd.items.add(dir)
-    resetAttributes()
   for file in getFiles():
     pd.items.add(file)
 
@@ -107,43 +105,55 @@ proc cloust(empty_line: bool, output_all_move: move, setcursorposX: int, setcurs
 
 proc getLine(): string =
   while true:
+    setStyle({styleBright})
+    setForegroundColor(fgYellow)
     var c = getch()
     if c == '\e':
       c = getch()
       if c == '[':
         case getch()
         of 'A':
-          cloust(true, up, 0,0)
+          cloust(true, up, 1,0)
         of 'D':
           clearCmd(true)
           var newpath: string = output_all(left)
           return newpath
         of 'B':
-          cloust(true, down, 0,0)
+          cloust(true, down, 1,0)
         of 'C':
           clearCmd(true)
           var newpath: string = output_all(right)
           return newpath
         else:
+          setStyle({styleBright})
+          setForegroundColor(fgYellow)
           write(stdout, c)
           str = str & c
       else: 
+        setStyle({styleBright})
+        setForegroundColor(fgYellow)
         write(stdout, c)
         str = str & c
     elif c == '\x7F':
       if str.len > 1:
         str.delete(str.len-1, str.len-1)
-        cloust(true, no, 0,0)
+        cloust(true, no, 1,0)
+        setStyle({styleBright})
+        setForegroundColor(fgYellow)
         write(stdout, str)
       else:
         str = ""
-        cloust(true, no, 0,0)
+        cloust(true, no, 1,0)
+        setStyle({styleBright})
+        setForegroundColor(fgYellow)
         write(stdout, str)
     elif c == '\c':
       var answer: string = str
       str = ""
       return answer
     else: 
+      setStyle({styleBright})
+      setForegroundColor(fgYellow)
       write(stdout, c)
       str = str & c
 
@@ -178,6 +188,6 @@ proc command(input_command : string) =
 #=======================================
 
 while true:
-  cloust(true, no, 0,0)
+  cloust(true, no, 1,0)
   var input_command = getLine()
   command(input_command)

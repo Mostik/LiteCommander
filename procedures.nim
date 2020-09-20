@@ -1,10 +1,12 @@
 import os, osproc, terminal, re, sequtils, strutils
 proc bgRed*(s: string): string {.procvar.} = "\e[41m" & s & "\e[0m"
-
 proc clearCmd*(line : bool) =
   if line == true:
     let errC = execCmd("clear")
-    echo ""
+    setStyle({styleBright})
+    setForegroundColor(fgGreen)
+    echo ">"
+    resetAttributes()
   else:
     let errC = execCmd("clear")
 
