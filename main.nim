@@ -156,6 +156,10 @@ proc command(input_command : string) =
       quit(0)
   elif input_command =~ re"""[$](.*)""":
     var errorcode : int = execCmd(matches[0])
+    pd.begin_item = 0
+    pd.height = height()-1
+    pd.dir = getCurrentDir()
+    pd.color_item = 0
   else:
     if input_command =~ re"""^./(.*)""":
       try:
