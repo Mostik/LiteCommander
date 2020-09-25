@@ -14,7 +14,6 @@ type
     height : int
     width : int
 
-
 var pd = PageData(items: @[], color_item: 0, begin_item: 0, dir: getCurrentDir(), height : height(), width : width())
 
 proc move_page(move : move): string {.discardable.}=
@@ -74,7 +73,6 @@ proc move_page(move : move): string {.discardable.}=
         return key
       except:
         discard
-
 
 proc output_all(move: move): string {.discardable.}=
   pd.items = @[]

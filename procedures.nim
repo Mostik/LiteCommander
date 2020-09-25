@@ -1,4 +1,4 @@
-import os, osproc, terminal, re, sequtils, strutils
+import os, osproc, terminal, re, sequtils, strutils, times
 proc bgRed*(s: string): string {.procvar.} = "\e[41m" & s & "\e[0m"
 proc clearCmd*(line : bool) =
   if line == true:
@@ -22,13 +22,6 @@ proc fileSize*(file: string): string =
       return $(int((int(filesize) / int(1024)))) & "Kb"
   else:
     return $filesize & "B"
-
-proc getFiles*() : seq[string] =
-  var files : seq[string]
-  for file in walkFiles("*"):
-    var file = file & " - " & fileSize(file)
-    files.add(file)
-  result = files
 
 proc getDirs*() : seq[string] =
   var dirs : seq[string]
@@ -78,3 +71,15 @@ proc loginfo*(str : auto) =
   discard file.readAll()
   file.writeLine(str)
   file.close()
+
+proc fileData*(file: string): string =
+  var time = getLastAccessTime(file)
+  result = format(time,"dd-MM-yy HH:mm",utc())
+
+proc getFiles*() : seq[string] =
+  var files : seq[string]
+  for file in walkFiles("*"):
+    var a = fileData(file)
+    var file = file & " - " & fileSize(file) & " - " & $fileData(file)
+    files.add(file)
+  result = files
