@@ -1,4 +1,4 @@
-import os, osproc, terminal, re, sequtils, strutils, times
+import os, osproc, terminal, re, sequtils, strutils, times, unicode
 proc bgRed*(s: string): string {.procvar.} = "\e[41m" & s & "\e[0m"
 proc clearCmd*(line : bool) =
   if line == true:
@@ -59,6 +59,8 @@ proc width*(): int  =
   result = terminalWidth()
 
 var logpath* = ""
+var max_size_name : int = 0
+var max_size_mem : int = 0
 
 proc logclear*() =
   logpath = getCurrentDir()
@@ -74,12 +76,28 @@ proc loginfo*(str : auto) =
 
 proc fileData*(file: string): string =
   var time = getLastAccessTime(file)
-  result = format(time,"dd-MM-yy HH:mm",utc())
+  result = format(time,"dd-MM-yy HH:mm",local())
 
 proc getFiles*() : seq[string] =
-  var files : seq[string]
+  max_size_name = 0
+  max_size_mem = 0
   for file in walkFiles("*"):
-    var a = fileData(file)
-    var file = file & " - " & fileSize(file) & " - " & $fileData(file)
+    if file.len > max_size_name : max_size_name = file.len
+  for file in walkFiles("*"):
+    loginfo(file & " " & $fileSize(file).len & " " & $file.len)
+    if fileSize(file).len > max_size_mem : max_size_mem = fileSize(file).len
+  var files : seq[string]
+
+  for file in walkFiles("*"):
+    var size = fileSize(file).len
+    var thissize = fileSize(file)
+    var thisfile = file
+    if file.runeLen < max_size_name:
+      for k in countup(1, max_size_name-file.runeLen):
+        thisfile = thisfile & " "
+    if size < max_size_mem:
+      for k in countup(1, max_size_mem-fileSize(file).len):
+        thissize = thissize & " "
+    var file = thisfile & " | " & thissize & " | " & $fileData(file)
     files.add(file)
   result = files
