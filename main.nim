@@ -2,7 +2,7 @@ import os, osproc, terminal, re, strutils
 import procedures
 #=======================================
 var str : string = ""
-logclear()
+logClear()
 type
   move = enum
     no, up, down, left, right
@@ -15,6 +15,8 @@ type
     width : int
 
 var pd = PageData(items: @[], color_item: 0, begin_item: 0, dir: getCurrentDir(), height : height(), width : width())
+
+proc command(input_command : string)
 
 proc move_page(move : move): string {.discardable.}=
   if pd.items.len > 0:
@@ -85,7 +87,7 @@ proc output_all(move: move): string {.discardable.}=
   for dir in getDirs():
     pd.items.add(dir)
   for file in getFiles():
-    pd.items.add(file)
+    pd.items.add(fileInfo(file))
 
   if pd.items.len > height():
     result = move_page(move)
